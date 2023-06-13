@@ -78,20 +78,19 @@ void delete_car_hash_table(HashTable *hash_table, int autonomy) {
     }
 }
 
-//search car in hash table
-CarNode * search_car(HashTable *hash_table, int autonomy) {
-    unsigned int hash_value = hash(autonomy);
-    CarNode *current = hash_table->table[hash_value];
-
-    while (current != NULL) {
-        if (current->autonomy == autonomy) {
-            puts("rottamata\n");
-            return current;
+//return the maximum autonomy of the cars in the hash table
+int max_autonomy(HashTable *hash_table) {
+    int max = 0;
+    for (int i = 0; i < MAX_CARS; i++) {
+        CarNode *current = hash_table->table[i];
+        while (current != NULL) {
+            if (current->autonomy > max) {
+                max = current->autonomy;
+            }
+            current = current->next;
         }
-        current = current->next;
     }
-    puts("non rottamata\n");
-    return NULL;
+    return max;
 }
 
 //print hash table
@@ -190,16 +189,14 @@ void delete_station(StationNode **root, int distance) {
 }
 
 //search station in binary search tree
-StationNode * search_station(StationNode *root, int distance, int check) {
+StationNode * search_station(StationNode *root, int distance) {
     if (root == NULL) {
-        if(check == 1) puts("non rottamata\n");
-        else if(check == 0) puts("non demolita\n");
         return NULL;
     } else {
         if (distance < root->distance) {
-            return search_station(root->left, distance, check);
+            return search_station(root->left, distance);
         } else if (distance > root->distance) {
-            return search_station(root->right, distance, check);
+            return search_station(root->right, distance);
         } else {
             return root;
         }
@@ -231,9 +228,18 @@ void print_tree(StationNode *root) {
 
 //delete car from hash table
 void delete_car(StationNode *root, int distance, int autonomy) {
-    StationNode *station = search_station(root, distance, 0);
+    StationNode *station = search_station(root, distance);
     if (station != NULL) {
         delete_car_hash_table(station->cars, autonomy);
+    }
+}
+
+//print the maximum autonomy for each station
+void print_max_autonomy(StationNode *root) {
+    if (root != NULL) {
+        print_max_autonomy(root->left);
+        printf("\nStazione %d, max autonomy %d", root->distance, root->max_autonomy);
+        print_max_autonomy(root->right);
     }
 }
 
@@ -245,14 +251,15 @@ int main() {
     char *token;
     StationNode *root = NULL;
     StationNode *station = NULL;
+    int *path = NULL;
 
     //Read input file
     while(fgets(input, MAX_LENGTH, stdin) != NULL) {
-        //remove newline character
+        //read input line
         input[strcspn(input, "\n")] = '\0';
-
         //tokenize input line
         token = strtok(input, " ");
+
         while (token != NULL) {
             //Switch based on first word of input line
             if (strcmp(token, "aggiungi-stazione") == 0) {
@@ -261,7 +268,7 @@ int main() {
                 char * distance = strtok(NULL, " ");
                 //insert station
                 insert_station(&root, atoi(distance), &station);
-                printf("Stazione distanza %d: \n", station->distance);
+                printf("Stazione distanza %d \n", station->distance);
                 //read the number of cars
                 token = strtok(NULL, " ");
                 if(atoi(token) == 0) break;
@@ -270,6 +277,9 @@ int main() {
                 while (autonomy != NULL) {
                     //insert_car(root, atoi(distance), atoi(token));
                     insert_car_hash_table(station->cars, atoi(autonomy));
+                    if(station->max_autonomy < atoi(autonomy)) {
+                        station->max_autonomy = atoi(autonomy);
+                    }
                     autonomy = strtok(NULL, " ");
                 }
                 //print_hash_table(station->cars);
@@ -277,19 +287,26 @@ int main() {
                 printf("Esegui azione: demolisci-stazione\n");
                 token = strtok(NULL, " ");
                 //delete station
+                delete_car_hash_table(station->cars, atoi(token));
                 delete_station(&root, atoi(token));
             } else if (strcmp(token, "aggiungi-auto") == 0) {
                 printf("Esegui azione: aggiungi-auto\n");
                 //read the distance
                 char * distance = strtok(NULL, " ");
                 //search station
-                station = search_station(root, atoi(distance), 1);
+                station = search_station(root, atoi(distance));
                 if(station != NULL) {
+                    printf("Stazione distanza %d \n", station->distance);
                     //read the autonomy
                     token = strtok(NULL, " ");
                     //insert car
                     insert_car_hash_table(station->cars, atoi(token));
+                    if(station->max_autonomy < atoi(token)) {
+                        station->max_autonomy = atoi(token);
+                    }
+                    puts("aggiunta");
                 } else {
+                    puts("non aggiunta");
                     token = strtok(NULL, " ");
                     break;
                 }
@@ -298,22 +315,45 @@ int main() {
                 //read the distance
                 char * distance = strtok(NULL, " ");
                 //search station
-                station = search_station(root, atoi(distance), 1);
+                station = search_station(root, atoi(distance));
                 if(station != NULL) {
                     //read the autonomy
                     token = strtok(NULL, " ");
                     //delete car
                     delete_car_hash_table(station->cars, atoi(token));
+                    if(station->max_autonomy == atoi(token)){
+                        station->max_autonomy = max_autonomy(station->cars);
+                    }
                 } else {
+                    puts("non rottamata");
                     token = strtok(NULL, " ");
                     break;
                 }
             } else if (strcmp(token, "pianifica-percorso") == 0) {
                 printf("Esegui azione: pianifica-percorso\n");
+                int start = atoi(strtok(NULL, " "));
+                int end = atoi(strtok(NULL, " "));
+                if(start == end) {
+                    printf("%d", start);
+                    break;
+                }
+                //search path from begin to end
+                if(start > end) {
+                    StationNode *start_node = search_station(root, start);
+                    int max_distance = start_node->distance + start_node->max_autonomy;
+
+                }
+                //search path from end to begin
+                else {
+
+                }
             }
             token = strtok(NULL, " ");
-        }
-    }
+        } //end of line
+    } //end of file
+
+    //print_tree(root);
+    //print_max_autonomy(root);
 
     //free memory
     free(input);
