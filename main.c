@@ -212,7 +212,7 @@ void delete_station(StationNode **root, int distance) {
             delete_station(&(*root)->right, distance);
         } else {
             if ((*root)->left == NULL && (*root)->right == NULL) {
-                //free((*root)->cars);
+                free((*root)->cars);
                 (*root)->cars = NULL;
                 (*root)->size = 0;
                 (*root)->capacity = 0;
@@ -221,7 +221,7 @@ void delete_station(StationNode **root, int distance) {
             } else if ((*root)->left == NULL) {
                 StationNode *temp = *root;
                 *root = (*root)->right;
-                //free(temp->cars);
+                free(temp->cars);
                 temp->cars = NULL;
                 temp->size = 0;
                 temp->capacity = 0;
@@ -229,18 +229,27 @@ void delete_station(StationNode **root, int distance) {
             } else if ((*root)->right == NULL) {
                 StationNode *temp = *root;
                 *root = (*root)->left;
-                //free(temp->cars);
+                free(temp->cars);
                 temp->cars = NULL;
                 temp->size = 0;
                 temp->capacity = 0;
                 free(temp);
             } else {
                 StationNode *temp = find_min((*root)->right);
+                free((*root)->cars);
+                (*root)->cars = NULL;
+                (*root)->size = 0;
+                (*root)->capacity = 0;
                 (*root)->distance = temp->distance;
                 (*root)->max_autonomy = temp->max_autonomy;
                 (*root)->size = temp->size;
                 (*root)->capacity = temp->capacity;
-                (*root)->cars = temp->cars;
+                //(*root)->cars = temp->cars;
+                (*root)->cars = (int *)malloc(sizeof(int) * (*root)->capacity);
+                // Copia degli elementi da temp->cars a (*root)->cars
+                for (int i = 0; i < temp->size; i++) {
+                    (*root)->cars[i] = temp->cars[i];
+                }
                 delete_station(&(*root)->right, temp->distance);
             }
         }
@@ -802,6 +811,7 @@ int main() {
     //free memory
     free(path);
     free(input);
+    free(token);
     delete_tree(&root);
     return 0;
 }
