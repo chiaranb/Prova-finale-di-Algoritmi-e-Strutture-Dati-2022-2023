@@ -212,7 +212,7 @@ void delete_station(StationNode **root, int distance) {
             delete_station(&(*root)->right, distance);
         } else {
             if ((*root)->left == NULL && (*root)->right == NULL) {
-                free((*root)->cars);
+                //free((*root)->cars);
                 (*root)->cars = NULL;
                 (*root)->size = 0;
                 (*root)->capacity = 0;
@@ -221,7 +221,7 @@ void delete_station(StationNode **root, int distance) {
             } else if ((*root)->left == NULL) {
                 StationNode *temp = *root;
                 *root = (*root)->right;
-                free(temp->cars);
+                //free(temp->cars);
                 temp->cars = NULL;
                 temp->size = 0;
                 temp->capacity = 0;
@@ -229,7 +229,7 @@ void delete_station(StationNode **root, int distance) {
             } else if ((*root)->right == NULL) {
                 StationNode *temp = *root;
                 *root = (*root)->left;
-                free(temp->cars);
+                //free(temp->cars);
                 temp->cars = NULL;
                 temp->size = 0;
                 temp->capacity = 0;
@@ -237,6 +237,10 @@ void delete_station(StationNode **root, int distance) {
             } else {
                 StationNode *temp = find_min((*root)->right);
                 (*root)->distance = temp->distance;
+                (*root)->max_autonomy = temp->max_autonomy;
+                (*root)->size = temp->size;
+                (*root)->capacity = temp->capacity;
+                (*root)->cars = temp->cars;
                 delete_station(&(*root)->right, temp->distance);
             }
         }
@@ -375,28 +379,28 @@ StationNode * get_next_station_generic(StationNode *root, int distance) {
 
     while (root != NULL) {
         if (distance < root->distance) {
-            // Il valore corrente è maggiore di distance, quindi potrebbe essere un candidato
             next_station = root;
             root = root->left;
         } else if (distance > root->distance) {
-            // Il valore corrente è minore di distance, quindi il prossimo valore potrebbe essere nel sottoalbero destro
             root = root->right;
         } else {
-            // Il valore corrente è uguale a distance, quindi il prossimo valore sarà nel sottoalbero destro
-            root = root->right;
+            next_station = root;
+            break;
         }
     }
-
     return next_station;
 }
 
-StationNode * check_min_station(StationNode * root, int end, StationNode * current) {
+//return the station or the next station if the station is not present given a generic value distance
+
+
+StationNode * check_min_station(StationNode * root, int max, StationNode * current) {
     StationNode * min = current;
     int minDistance = current->distance - current->max_autonomy;
     StationNode * next = get_next_station_generic(root, minDistance);
 
     current = get_next_station(root, current);
-    while(current != NULL && current->distance < end) {
+    while(current != NULL && current->distance < max) {
         if(current->distance - current->max_autonomy > minDistance) {
             current = get_next_station(root, current);
         }
@@ -411,6 +415,23 @@ StationNode * check_min_station(StationNode * root, int end, StationNode * curre
         }
     }
     return min;
+}
+
+//search the station with the distance + max autonomy closest to the distance between two distances
+StationNode * check_best_station(StationNode *root, StationNode *start, int end) {
+    StationNode * best = start;
+    int target = start->distance;
+
+    StationNode * current = start;
+    while(current != NULL && current->distance >= end) {
+        current = get_previous_station(root, current);
+        if(current != NULL && current->distance + current->max_autonomy >= target) {
+                best = current;
+            }
+    }
+    if(best->distance == start->distance)
+        return NULL;
+    else return best;
 }
 
 //return the first next station in the binary search tree given a distance and smaller than max autonomy
@@ -581,7 +602,7 @@ int main() {
                 //delete station
                 station = search_station(root, atoi(token));
                 if(station != NULL) {
-                    delete_cars(station);
+                    //delete_cars(station);
                     delete_station(&root, atoi(token));
                     puts("demolita");
                 }
@@ -656,33 +677,21 @@ int main() {
                     path[size] = end;
                     size++;
 
-                    StationNode *current = get_smallest_station(root, end);
-//                    printf("current 1: %d\n", current->distance);
-                    if(size >= capacity) {
-                        capacity = (capacity == 0) ? 1 : capacity * 2;
-                        int *temp = (int *)realloc(path, sizeof(int) * capacity);
-                        path = temp;
+                    StationNode *current = NULL;
+                    current = search_station(root, end);
+                    current = check_best_station(root, current, start);
+                    if(current == NULL) {
+                        puts("nessun percorso");
+                        size = 0;
+                        break;
                     }
-                    path[size] = current->distance;
-                    size++;
-
-                    StationNode *current1 = NULL;
-                    while(current->distance > start) {
-                        current = get_smallest_station(root, current->distance);
-                        if(current1 != NULL && current1->distance == current->distance) {
+                    while(current != NULL && current->distance > start) {
+//                        printf("Current %d \n", current->distance);
+                        if (current == NULL) {
                             puts("nessun percorso");
-                            size = 0;
-                            break;
-                        } else if (current->distance < start) {
-                            if(size >= capacity) {
-                                capacity = (capacity == 0) ? 1 : capacity * 2;
-                                int *temp = (int *)realloc(path, sizeof(int) * capacity);
-                                path = temp;
-                            }
-                            path[size] = start;
-                            size++;
                             break;
                         }
+
                         if(size >= capacity) {
                             capacity = (capacity == 0) ? 1 : capacity * 2;
                             int *temp = (int *)realloc(path, sizeof(int) * capacity);
@@ -690,9 +699,22 @@ int main() {
                         }
                         path[size] = current->distance;
                         size++;
-                        printf("current: %d\n", current->distance);
-                        current1 = current;
+
+                        current = check_best_station(root, current, start);
                     }
+                    if(current == NULL) {
+                        puts("nessun percorso");
+                        size = 0;
+                        break;
+                    }
+
+                    if(size >= capacity) {
+                        capacity = (capacity == 0) ? 1 : capacity * 2;
+                        int *temp = (int *)realloc(path, sizeof(int) * capacity);
+                        path = temp;
+                    }
+                    path[size] = start;
+                    size++;
 
                     //print path in reverse order
                     for(int i = size - 1; i >= 0; i--) {
@@ -748,7 +770,9 @@ int main() {
                             size++;
                             break;
                         }
-                        current = check_min_station(root, max, current);
+//                        if(current->max_autonomy < end) {
+                            current = check_min_station(root, max, current);
+//                        }
                         //printf("current 2: %d\n", current->distance);
 //                        printf("current: %d\n", current->distance);
                         if(size >= capacity) {
@@ -772,7 +796,7 @@ int main() {
         } //end of line
     } //end of file
 
-    //print_tree(root);
+    print_tree(root);
     //print_max_autonomy(root);
 
     //free memory
