@@ -285,42 +285,12 @@ void delete_tree(StationNode **root) {
     }
 }
 
-//print the binary search tree
-void print_tree(StationNode *root) {
-    if (root != NULL) {
-        print_tree(root->left);
-        printf("\nStazione %d, max autonomy %d, max distance %d, min distance %d", root->distance, root->max_autonomy, root->distance + root->max_autonomy, root->distance - root->max_autonomy);
-        //print_hash_table(root->cars);
-        print_tree(root->right);
-    }
-}
-
 //print the maximum autonomy for each station
 void print_max_autonomy(StationNode *root) {
     if (root != NULL) {
         print_max_autonomy(root->left);
         printf("\nStazione %d, max autonomy %d", root->distance, root->max_autonomy);
         print_max_autonomy(root->right);
-    }
-}
-
-//give a distance return the last station before that distance
-StationNode * get_last_station(StationNode *root, int distance) {
-    if (root == NULL) {
-        return NULL;
-    } else {
-        if (distance < root->distance) {
-            return get_last_station(root->left, distance);
-        } else if (distance > root->distance) {
-            StationNode *temp = get_last_station(root->right, distance);
-            if (temp == NULL) {
-                return root;
-            } else {
-                return temp;
-            }
-        } else {
-            return root;
-        }
     }
 }
 
@@ -404,6 +374,9 @@ StationNode * check_min_station(StationNode * root, int max, StationNode * curre
     StationNode * min = current;
     int minDistance = current->distance - current->max_autonomy;
     StationNode * next = get_next_station_generic(root, minDistance);
+//    if(current->distance == 8885)  {
+//        printf("QUIII \n%d\n\n", next->distance);
+//    }
 
     current = get_next_station(root, current);
     while(current != NULL && current->distance < max) {
@@ -412,13 +385,12 @@ StationNode * check_min_station(StationNode * root, int max, StationNode * curre
         }
         else {
             StationNode *next_check = get_next_station_generic(root, current->distance - current->max_autonomy);
-            if(next_check->distance < next->distance && current->distance-current->max_autonomy <= end) {
-                return current;
-//                min = current;
-//                minDistance = current->distance - current->max_autonomy;
-//                next = next_check;
+            if(next_check->distance < next->distance && next_check->distance-next_check->max_autonomy <= end) {
+                min = current;
+                minDistance = current->distance - current->max_autonomy;
+                next = next_check;
             }
-            else if(next_check->distance < next->distance && next_check->distance-next_check->max_autonomy < next->distance-next->max_autonomy) {
+            else if(next_check->distance < next->distance && next_check->distance-next_check->max_autonomy <= next->distance-next->max_autonomy) {
                 min = current;
                 minDistance = current->distance - current->max_autonomy;
                 next = next_check;
@@ -513,14 +485,6 @@ void remove_car(StationNode *station, int car) {
     puts("non rottamata");
 }
 
-//delete all the cars in the station
-void delete_cars(StationNode *station) {
-    free(station->cars);
-    station->cars = NULL;
-    station->size = 0;
-    station->capacity = 0;
-}
-
 //print all the cars in the station
 void print_cars(StationNode *station) {
     printf("MACCHINE\n");
@@ -535,13 +499,12 @@ void print_cars(StationNode *station) {
  ***************************************/
 int main() {
     char *input = (char *)malloc(sizeof(char) * MAX_LENGTH);
-    char *token;
+    char *token = NULL;
     StationNode *root = NULL;
     StationNode *station = NULL;
     int *path = NULL;
     int size = 0;
     int capacity = 0;
-    boolean flag = false;
 
     //Read input file
     while(fgets(input, MAX_LENGTH, stdin) != NULL) {
@@ -590,7 +553,6 @@ int main() {
 //                print_tree(root);
 //                printf("\n");
                 token = strtok(NULL, " ");
-                boolean deleted = false;
                 //delete station
                 station = search_station(root, atoi(token));
                 if(station != NULL) {
