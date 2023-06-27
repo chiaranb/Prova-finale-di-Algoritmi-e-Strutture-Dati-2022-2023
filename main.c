@@ -3,152 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 
 #define MAX_LENGTH 10000
-#define MAX_CARS 512
-
-typedef enum {false, true} boolean;
-
-/***************************************
- *    CARS STRUCTURE AND FUNCTIONS
- ***************************************/
-//create bucket car for hash table
-typedef struct node_car {
-    int autonomy;
-    struct node_car *next;
-} CarNode;
-
-typedef struct HashTable {
-    CarNode *table[MAX_CARS];
-} HashTable;
-
-//initialize hash table
-void init_hash_table(HashTable *hash_table) {
-    for (int i = 0; i < MAX_CARS; i++) {
-        hash_table->table[i] = NULL;
-    }
-}
-
-unsigned hash(int autonomy) {
-    unsigned int a = 2654435769;
-    unsigned int hash_value = autonomy * a;
-    hash_value = hash_value >> (32 - (int)log2(MAX_CARS));
-    return hash_value;
-}
-
-//insert car in hash table
-void insert_car_hash_table(HashTable *hash_table, int autonomy) {
-    unsigned int hash_value = hash(autonomy);
-    CarNode *new_node = (CarNode *)malloc(sizeof(CarNode));
-    new_node->autonomy = autonomy;
-    new_node->next = NULL;
-
-    if (hash_table->table[hash_value] == NULL) {
-        hash_table->table[hash_value] = new_node;
-    } else {
-        CarNode *current = hash_table->table[hash_value];
-        while (current->next != NULL) {
-            current = current->next;
-        }
-        current->next = new_node;
-    }
-    //printf("autonomia: %d\n", autonomy);
-}
-
-//delete car from hash table
-void delete_car_hash_table(HashTable *hash_table, int autonomy) {
-    unsigned int hash_value = hash(autonomy);
-    CarNode *current = hash_table->table[hash_value];
-    CarNode *previous = NULL;
-
-    while (current != NULL && current->autonomy != autonomy) {
-        previous = current;
-        current = current->next;
-    }
-
-    if (current == NULL) {
-        puts("non rottamata");
-    } else {
-        if (previous == NULL) {
-            hash_table->table[hash_value] = current->next;
-        } else {
-            previous->next = current->next;
-        }
-        puts("rottamata");
-        free(current);
-    }
-}
-
-//return the maximum autonomy of the cars in the hash table
-int max_autonomy(HashTable *hash_table) {
-    if(hash_table == NULL) {
-        return 0;
-    }
-    int max = 0;
-    for (int i = 0; i < MAX_CARS; i++) {
-        CarNode *current = hash_table->table[i];
-        while (current != NULL) {
-            if (current->autonomy > max) {
-                max = current->autonomy;
-            }
-            current = current->next;
-        }
-    }
-    return max;
-}
-
-//print hash table
-void print_hash_table(HashTable *hash_table) {
-    for (int i = 0; i < MAX_CARS; i++) {
-        CarNode *current = hash_table->table[i];
-        printf("Bucket %d: ", i);
-        while (current != NULL) {
-            printf("%d ", current->autonomy);
-            current = current->next;
-        }
-        printf("\n");
-    }
-}
-
-//delete hash table
-void delete_hash_table(HashTable *hash_table) {
-    for (int i = 0; i < MAX_CARS; i++) {
-        CarNode *current = hash_table->table[i];
-        while (current != NULL) {
-            CarNode *temp = current;
-            current = current->next;
-            free(temp);
-        }
-    }
-}
-
-//delete hash table and free memory
-void delete_hash_table_free(HashTable *hash_table) {
-    for (int i = 0; i < MAX_CARS; i++) {
-        CarNode *current = hash_table->table[i];
-        while (current != NULL) {
-            CarNode *temp = current;
-            current = current->next;
-            free(temp);
-        }
-    }
-    free(hash_table);
-}
-
-//find car in hash table
-boolean find_car_hash_table(HashTable *hash_table, int autonomy) {
-    unsigned int hash_value = hash(autonomy);
-    CarNode *current = hash_table->table[hash_value];
-    while (current != NULL && current->autonomy != autonomy) {
-        current = current->next;
-    }
-    if (current == NULL) {
-        return false;
-    } else {
-        return true;
-    }
-}
 
 /***************************************
  *    STATIONS STRUCTURE AND FUNCTIONS
@@ -159,7 +15,6 @@ typedef struct node_station {
     int *cars;
     int size;
     int capacity;
-//    HashTable *cars;
     struct node_station *left;
     struct node_station *right;
 } StationNode;
@@ -173,8 +28,6 @@ void * insert_station(StationNode **root, int distance, StationNode **station) {
         new_node->size = 0;
         new_node->capacity = 0;
         new_node->cars = NULL;
-//        new_node->cars = (HashTable *)malloc(sizeof(HashTable));
-//        init_hash_table(new_node->cars);
         new_node->left = NULL;
         new_node->right = NULL;
         *root = new_node;
@@ -246,7 +99,6 @@ void delete_station(StationNode **root, int distance) {
                 (*root)->capacity = temp->capacity;
                 //(*root)->cars = temp->cars;
                 (*root)->cars = (int *)malloc(sizeof(int) * (*root)->capacity);
-                // Copia degli elementi da temp->cars a (*root)->cars
                 for (int i = 0; i < temp->size; i++) {
                     (*root)->cars[i] = temp->cars[i];
                 }
@@ -285,15 +137,6 @@ void delete_tree(StationNode **root) {
     }
 }
 
-//print the maximum autonomy for each station
-void print_max_autonomy(StationNode *root) {
-    if (root != NULL) {
-        print_max_autonomy(root->left);
-        printf("\nStazione %d, max autonomy %d", root->distance, root->max_autonomy);
-        print_max_autonomy(root->right);
-    }
-}
-
 //given a station return the next station
 StationNode* get_next_station(StationNode* root, StationNode* station) {
     if (root == NULL) {
@@ -321,6 +164,26 @@ StationNode * get_previous_station(StationNode *root, StationNode *station) {
             return get_previous_station(root->left, station);
         } else if (station->distance > root->distance) {
             StationNode *temp = get_previous_station(root->right, station);
+            if (temp == NULL) {
+                return root;
+            } else {
+                return temp;
+            }
+        } else {
+            return root;
+        }
+    }
+}
+
+//give a distance return the previous station
+StationNode * get_previous_station_based_on_distance(StationNode *root, int distance) {
+    if (root == NULL) {
+        return NULL;
+    } else {
+        if (distance < root->distance) {
+            return get_previous_station_based_on_distance(root->left, distance);
+        } else if (distance > root->distance) {
+            StationNode *temp = get_previous_station_based_on_distance(root->right, distance);
             if (temp == NULL) {
                 return root;
             } else {
@@ -374,23 +237,18 @@ StationNode * check_min_station(StationNode * root, int max, StationNode * curre
     StationNode * min = current;
     int minDistance = current->distance - current->max_autonomy;
     StationNode * next = get_next_station_generic(root, minDistance);
-//    if(current->distance == 8885)  {
-//        printf("QUIII \n%d\n\n", next->distance);
-//    }
 
     current = get_next_station(root, current);
     while(current != NULL && current->distance < max) {
-        if(current->distance - current->max_autonomy > minDistance) {
+        if(current->distance - current->max_autonomy < minDistance && current->distance - current->max_autonomy <= end) {
+            return current;
+        }
+        if(current->distance - current->max_autonomy > minDistance && current->distance - current->max_autonomy > end) {
             current = get_next_station(root, current);
         }
         else {
             StationNode *next_check = get_next_station_generic(root, current->distance - current->max_autonomy);
-            if(next_check->distance < next->distance && next_check->distance-next_check->max_autonomy <= end) {
-                min = current;
-                minDistance = current->distance - current->max_autonomy;
-                next = next_check;
-            }
-            else if(next_check->distance < next->distance && next_check->distance-next_check->max_autonomy <= next->distance-next->max_autonomy) {
+            if(next_check->distance < next->distance) {
                 min = current;
                 minDistance = current->distance - current->max_autonomy;
                 next = next_check;
@@ -409,7 +267,7 @@ StationNode * check_best_station(StationNode *root, StationNode *start, int end)
     StationNode * current = start;
     while(current != NULL && current->distance >= end) {
         current = get_previous_station(root, current);
-        if(current != NULL && current->distance + current->max_autonomy >= target) {
+        if(current != NULL && current-> distance >= end && current->distance + current->max_autonomy >= target) {
                 best = current;
             }
     }
@@ -418,21 +276,32 @@ StationNode * check_best_station(StationNode *root, StationNode *start, int end)
     else return best;
 }
 
-//search the smallest station that with the sum of his distance with his max autonomy can reach a given distance
-StationNode * get_smallest_station(StationNode *root, int distance) {
-    StationNode *smallest_station = NULL;
-
-    while (root != NULL) {
-        if (root->distance + root->max_autonomy < distance) {
-            // Il valore corrente non è sufficiente per raggiungere distance, quindi il prossimo valore potrebbe essere nel sottoalbero destro
-            root = root->right;
+//search the station between two given distances that has the minimum distance smaller than a given distance
+//cerco dal più piccolo al più grande
+StationNode * find_smaller_station(StationNode *root, int smaller, int bigger, int target) {
+//    if(target == 367108336) {
+//        printf("QUI");
+//    }
+    StationNode * current = get_previous_station_based_on_distance(root, bigger);
+    StationNode * min = NULL;
+    while(current != NULL && current->distance > smaller) {
+        if(current->distance - current->max_autonomy > target) {
+            current = get_previous_station(root, current);
         } else {
-            // Il valore corrente è sufficiente per raggiungere distance, quindi potrebbe essere un candidato
-            smallest_station = root;
-            root = root->left;
+            min = current;
+            current = get_previous_station(root, current);
         }
     }
-    return smallest_station;
+    return min;
+}
+
+//print the binary search tree
+void print_tree(StationNode *root) {
+    if (root != NULL) {
+        print_tree(root->left);
+        printf("\nStazione %d, max autonomy %d, max distance %d, min distance %d", root->distance, root->max_autonomy, root->distance + root->max_autonomy, root->distance - root->max_autonomy);
+        print_tree(root->right);
+    }
 }
 
 //add a car in the station in order from the biggest to the smallest
@@ -459,7 +328,6 @@ void add_car(StationNode *s, int car) {
     s->size++;
 }
 
-
 //search and remove a car in the station
 void remove_car(StationNode *station, int car) {
     int i = 0;
@@ -483,15 +351,6 @@ void remove_car(StationNode *station, int car) {
         }
     }
     puts("non rottamata");
-}
-
-//print all the cars in the station
-void print_cars(StationNode *station) {
-    printf("MACCHINE\n");
-    for(int i = 0; i < station->size; i++) {
-        printf("%d ", station->cars[i]);
-    }
-    puts("");
 }
 
 /***************************************
@@ -607,6 +466,7 @@ int main() {
                     if(station->max_autonomy == atoi(token)){
                         if(station->size != 0)
                             station->max_autonomy = station->cars[0];
+                        else station->max_autonomy = 0;
                     }
                 } else {
                     puts("non rottamata");
@@ -680,6 +540,11 @@ int main() {
                 }
                 //search path from end to begin
                 else {
+//                    if(start == 835049915) {
+//                        print_tree(root);
+//                        printf("\n");
+//                    }
+
                     if(size >= capacity) {
                         capacity = (capacity == 0) ? 1 : capacity * 2;
                         int *temp = (int *)realloc(path, sizeof(int) * capacity);
@@ -739,7 +604,7 @@ int main() {
                             size++;
 
                             if(current->distance != end) {
-                                if (size >= capacity) {
+                                if(size >= capacity) {
                                     capacity = (capacity == 0) ? 1 : capacity * 2;
                                     int *temp = (int *) realloc(path, sizeof(int) * capacity);
                                     path = temp;
@@ -751,13 +616,13 @@ int main() {
                         }
 
                         StationNode * cur = check_min_station(root, max, current, end);
+
                         if(prev->distance-prev->max_autonomy < cur->distance) {
                             path[size-1] = prev->distance;
                         }
                         prev = current;
                         current = cur;
-                        //printf("current 2: %d\n", current->distance);
-//                        printf("current: %d\n", current->distance);
+
                         if(size >= capacity) {
                             capacity = (capacity == 0) ? 1 : capacity * 2;
                             int *temp = (int *)realloc(path, sizeof(int) * capacity);
@@ -765,6 +630,27 @@ int main() {
                         }
                         path[size] = current->distance;
                         size++;
+
+                        if(size >= 3) {
+                            //print path
+//                            for(int i = 0; i < size; i++) {
+//                                if(i == size - 1) printf("%d\n", path[i]);
+//                                else printf("%d ", path[i]);
+//                            }
+                            StationNode * prevv = search_station(root, path[size-3]);
+//                            if(prevv->distance == 784204151) {
+//                                printf("QUI");
+//                            }
+                            int max_prev = prevv->distance - prevv->max_autonomy;
+                            int tem = path[size-2];
+                            StationNode * check = find_smaller_station(root, max_prev, tem, current->distance);
+//                            if(check->distance == 390932293) {
+//                                printf("QUI");
+//                            }
+                            if(check != NULL) {
+                                path[size-2] = check->distance;
+                            }
+                        }
 
                         current1 = current;
                     }
