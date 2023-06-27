@@ -357,7 +357,7 @@ void remove_car(StationNode *station, int car) {
 void add_station(StationNode *station, StationNode **stations, int size, int capacity) {
     if(size == capacity) {
         capacity = capacity * 2 + 1;
-        stations = (StationNode *)realloc(*stations, sizeof(StationNode) * capacity);
+        *stations = (StationNode *)realloc(*stations, sizeof(StationNode) * capacity);
     }
     (*stations)[size] = *station;
     (size)++;
@@ -376,7 +376,7 @@ int main() {
     char *token = NULL;
     StationNode *root = NULL;
     StationNode *station = NULL;
-    StationNode *add = NULL;
+    StationNode *add = (StationNode *)malloc(sizeof(StationNode));
     int *path = NULL;
     StationNode *path2 = NULL;
     int size = 0;
@@ -567,7 +567,6 @@ int main() {
                         StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
                         path2 = temp;
                     }
-                    add = (StationNode *)malloc(sizeof(StationNode));
                     add->distance = start_node->distance;
                     add->max_autonomy = start_node->max_autonomy;
                     path2[size] = *add;
@@ -611,9 +610,9 @@ int main() {
                                 StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
                                 path2 = temp;
                             }
-                            StationNode *end_node = malloc(sizeof(StationNode));
-                            end_node->distance = end;
-                            path2[size] = *end_node;
+                            add->distance = end;
+                            add->max_autonomy = 0;
+                            path2[size] = *add;
                             (size)++;
                             break;
                         }
@@ -634,9 +633,9 @@ int main() {
                                     StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
                                     path2 = temp;
                                 }
-                                StationNode *end_node = malloc(sizeof(StationNode));
-                                end_node->distance = end;
-                                path2[size] = *end_node;
+                                add->distance = end;
+                                add->max_autonomy = 0;
+                                path2[size] = *add;
                                 (size)++;
                             }
                             break;
@@ -681,6 +680,7 @@ int main() {
 
     //free memory
     free(path);
+    free(add);
     free(path2);
     free(input);
     free(token);
