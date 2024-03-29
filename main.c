@@ -9,6 +9,8 @@
 /***************************************
  *    STATIONS STRUCTURE AND FUNCTIONS
  ***************************************/
+
+//structure of a station
 typedef struct node_station {
     int distance;
     int max_autonomy;
@@ -19,10 +21,10 @@ typedef struct node_station {
     struct node_station *right;
 } StationNode;
 
-//insert station in binary search tree
-void * insert_station(StationNode **root, int distance, StationNode **station) {
+//insert a station in the BST
+void *insert_station(StationNode **root, int distance, StationNode **station) {
     if (*root == NULL) {
-        StationNode *new_node = (StationNode *)malloc(sizeof(StationNode));
+        StationNode *new_node = (StationNode *) malloc(sizeof(StationNode));
         new_node->distance = distance;
         new_node->max_autonomy = 0;
         new_node->size = 0;
@@ -46,7 +48,7 @@ void * insert_station(StationNode **root, int distance, StationNode **station) {
 }
 
 //find min function for binary search tree
-StationNode * find_min(StationNode *root) {
+StationNode *find_min(StationNode *root) {
     if (root == NULL) {
         return NULL;
     } else if (root->left == NULL) {
@@ -56,7 +58,7 @@ StationNode * find_min(StationNode *root) {
     }
 }
 
-//delete a station from binary search tree
+//delete a station from the BST
 void delete_station(StationNode **root, int distance) {
     if (*root != NULL) {
         if (distance < (*root)->distance) {
@@ -97,7 +99,7 @@ void delete_station(StationNode **root, int distance) {
                 (*root)->max_autonomy = temp->max_autonomy;
                 (*root)->size = temp->size;
                 (*root)->capacity = temp->capacity;
-                (*root)->cars = (int *)malloc(sizeof(int) * (*root)->capacity);
+                (*root)->cars = (int *) malloc(sizeof(int) * (*root)->capacity);
                 for (int i = 0; i < temp->size; i++) {
                     (*root)->cars[i] = temp->cars[i];
                 }
@@ -107,8 +109,8 @@ void delete_station(StationNode **root, int distance) {
     }
 }
 
-//search station in binary search tree
-StationNode * search_station(StationNode *root, int distance) {
+//search a station in BST
+StationNode *search_station(StationNode *root, int distance) {
     if (root == NULL) {
         return NULL;
     } else {
@@ -122,7 +124,7 @@ StationNode * search_station(StationNode *root, int distance) {
     }
 }
 
-//delete binary search tree
+//delete the BST
 void delete_tree(StationNode **root) {
     if (*root != NULL) {
         delete_tree(&(*root)->left);
@@ -136,12 +138,13 @@ void delete_tree(StationNode **root) {
     }
 }
 
-StationNode* get_next_station(StationNode* root, StationNode* station) {
+//get the next station in the BST
+StationNode *get_next_station(StationNode *root, StationNode *station) {
     if (root == NULL) {
         return NULL;
     } else {
         if (station->distance < root->distance) {
-            StationNode* temp = get_next_station(root->left, station);
+            StationNode *temp = get_next_station(root->left, station);
             if (temp == NULL) {
                 return root;
             } else {
@@ -153,7 +156,8 @@ StationNode* get_next_station(StationNode* root, StationNode* station) {
     }
 }
 
-StationNode * get_previous_station(StationNode *root, StationNode *station) {
+//get the previous station in the BST
+StationNode *get_previous_station(StationNode *root, StationNode *station) {
     if (root == NULL) {
         return NULL;
     } else {
@@ -172,7 +176,8 @@ StationNode * get_previous_station(StationNode *root, StationNode *station) {
     }
 }
 
-StationNode * get_previous_station_based_on_distance(StationNode *root, int distance) {
+//get the previous station in the BST based on the distance
+StationNode *get_previous_station_based_on_distance(StationNode *root, int distance) {
     if (root == NULL) {
         return NULL;
     } else {
@@ -191,7 +196,8 @@ StationNode * get_previous_station_based_on_distance(StationNode *root, int dist
     }
 }
 
-StationNode * get_next_station_based_on_max_autonomy(StationNode *root, StationNode *station) {
+//get the next station in the BST based on the distance
+StationNode *get_next_station_based_on_max_autonomy(StationNode *root, StationNode *station) {
     if (root == NULL) {
         return NULL;
     } else {
@@ -210,7 +216,8 @@ StationNode * get_next_station_based_on_max_autonomy(StationNode *root, StationN
     }
 }
 
-StationNode * get_next_station_generic(StationNode *root, int distance) {
+//get the next station in the BST based on the distance
+StationNode *get_next_station_generic(StationNode *root, int distance) {
     StationNode *next_station = NULL;
 
     while (root != NULL) {
@@ -227,22 +234,24 @@ StationNode * get_next_station_generic(StationNode *root, int distance) {
     return next_station;
 }
 
-StationNode * check_min_station(StationNode * root, int max, StationNode * current, int end) {
-    StationNode * min = current;
+//search the station with the distance + max autonomy closest to the distance between two distances
+StationNode *check_min_station(StationNode *root, int max, StationNode *current, int end) {
+    StationNode *min = current;
     int minDistance = current->distance - current->max_autonomy;
-    StationNode * next = get_next_station_generic(root, minDistance);
+    StationNode *next = get_next_station_generic(root, minDistance);
 
     current = get_next_station(root, current);
-    while(current != NULL && current->distance < max) {
-        if(current->distance - current->max_autonomy < minDistance && current->distance - current->max_autonomy <= end) {
+    while (current != NULL && current->distance < max) {
+        if (current->distance - current->max_autonomy < minDistance &&
+            current->distance - current->max_autonomy <= end) {
             return current;
         }
-        if(current->distance - current->max_autonomy > minDistance && current->distance - current->max_autonomy > end) {
+        if (current->distance - current->max_autonomy > minDistance &&
+            current->distance - current->max_autonomy > end) {
             current = get_next_station(root, current);
-        }
-        else {
+        } else {
             StationNode *next_check = get_next_station_generic(root, current->distance - current->max_autonomy);
-            if(next_check->distance < next->distance) {
+            if (next_check->distance < next->distance) {
                 min = current;
                 minDistance = current->distance - current->max_autonomy;
                 next = next_check;
@@ -254,70 +263,57 @@ StationNode * check_min_station(StationNode * root, int max, StationNode * curre
 }
 
 //search the station with the distance + max autonomy closest to the distance between two distances
-StationNode * check_best_station(StationNode *root, StationNode *start, int end) {
-    StationNode * best = start;
+StationNode *check_best_station(StationNode *root, StationNode *start, int end) {
+    StationNode *best = start;
     int target = start->distance;
 
-    StationNode * current = start;
-    while(current != NULL && current->distance >= end) {
+    StationNode *current = start;
+    while (current != NULL && current->distance >= end) {
         current = get_previous_station(root, current);
-        if(current != NULL && current-> distance >= end && current->distance + current->max_autonomy >= target) {
-                best = current;
-            }
+        if (current != NULL && current->distance >= end && current->distance + current->max_autonomy >= target) {
+            best = current;
+        }
     }
-    if(best->distance == start->distance)
+    if (best->distance == start->distance)
         return NULL;
     else return best;
 }
 
-//print the binary search tree
-void print_tree(StationNode *root) {
-    if (root != NULL) {
-        print_tree(root->left);
-        printf("\nStazione %d, max autonomy %d, max distance %d, min distance %d", root->distance, root->max_autonomy, root->distance + root->max_autonomy, root->distance - root->max_autonomy);
-        print_tree(root->right);
-    }
-}
-
-//add a car in the station in order from the biggest to the smallest
+//add a car in the station
 void add_car(StationNode *s, int car) {
     int i = 0;
     int j = s->size - 1;
-    int m = 0;
-    while(i <= j) {
+    int m;
+    while (i <= j) {
         m = (i + j) / 2;
-        if(s->cars[m] < car) {
+        if (s->cars[m] < car) {
             j = m - 1;
-        }
-        else if(s->cars[m] > car) {
+        } else if (s->cars[m] > car) {
             i = m + 1;
-        }
-        else {
+        } else {
             return;
         }
     }
-    for(int k = s->size; k > i; k--) {
+    for (int k = s->size; k > i; k--) {
         s->cars[k] = s->cars[k - 1];
     }
     s->cars[i] = car;
     s->size++;
 }
 
-//search and remove a car in the station
+//search a car in the station
 void remove_car(StationNode *station, int car) {
     int i = 0;
     int j = station->size - 1;
-    int m = 0;
-    while(i <= j) {
+    int m;
+    while (i <= j) {
         m = (i + j) / 2;
-        if(station->cars[m] < car) {
+        if (station->cars[m] < car) {
             j = m - 1;
-        }
-        else if(station->cars[m] > car) {
+        } else if (station->cars[m] > car) {
             i = m + 1;
-        }
-        else {
-            for(int k = m; k < station->size - 1; k++) {
+        } else {
+            for (int k = m; k < station->size - 1; k++) {
                 station->cars[k] = station->cars[k + 1];
             }
             station->size--;
@@ -336,69 +332,68 @@ void replace_station(StationNode *station, StationNode **stations, int index) {
 /***************************************
  *    MAIN
  ***************************************/
+
 int main() {
-    char *input = (char *)malloc(sizeof(char) * MAX_LENGTH);
+    char *input = (char *) malloc(sizeof(char) * MAX_LENGTH);
     char *token = NULL;
     StationNode *root = NULL;
     StationNode *station = NULL;
-    StationNode *add = (StationNode *)malloc(sizeof(StationNode));
+    StationNode *add = (StationNode *) malloc(sizeof(StationNode));
     int *path = NULL;
     StationNode *path2 = NULL;
     int size = 0;
     int capacity = 0;
-
-    while(fgets(input, MAX_LENGTH, stdin) != NULL) {
+    //read input
+    while (fgets(input, MAX_LENGTH, stdin) != NULL) {
         input[strcspn(input, "\n")] = '\0';
         token = strtok(input, " ");
 
         while (token != NULL) {
             if (strcmp(token, "aggiungi-stazione") == 0) {
-                char * distance = strtok(NULL, " ");
-                if(search_station(root, atoi(distance)) == NULL) {
+                char *distance = strtok(NULL, " ");
+                if (search_station(root, atoi(distance)) == NULL) {
                     insert_station(&root, atoi(distance), &station);
                     token = strtok(NULL, " ");
-                    if(atoi(token) == 0) break;
-                    char * autonomy = strtok(NULL, " ");
+                    if (atoi(token) == 0) break;
+                    char *autonomy = strtok(NULL, " ");
                     while (autonomy != NULL) {
-                        if(station->size >= station->capacity) {
+                        if (station->size >= station->capacity) {
                             station->capacity = (station->capacity == 0) ? 1 : station->capacity * 2;
-                            int *temp = (int *)realloc(station->cars, sizeof(int) * station->capacity);
+                            int *temp = (int *) realloc(station->cars, sizeof(int) * station->capacity);
                             station->cars = temp;
                         }
                         add_car(station, atoi(autonomy));
-                        if(station->max_autonomy < atoi(autonomy)) {
+                        if (station->max_autonomy < atoi(autonomy)) {
                             station->max_autonomy = atoi(autonomy);
                         }
                         autonomy = strtok(NULL, " ");
                     }
-                }
-                else {
+                } else {
                     puts("non aggiunta");
                     break;
                 }
             } else if (strcmp(token, "demolisci-stazione") == 0) {
                 token = strtok(NULL, " ");
                 station = search_station(root, atoi(token));
-                if(station != NULL) {
+                if (station != NULL) {
                     delete_station(&root, atoi(token));
                     puts("demolita");
-                }
-                else {
+                } else {
                     puts("non demolita");
                     break;
                 }
             } else if (strcmp(token, "aggiungi-auto") == 0) {
-                char * distance = strtok(NULL, " ");
+                char *distance = strtok(NULL, " ");
                 station = search_station(root, atoi(distance));
-                if(station != NULL) {
+                if (station != NULL) {
                     token = strtok(NULL, " ");
-                    if(station->size >= station->capacity) {
+                    if (station->size >= station->capacity) {
                         station->capacity = (station->capacity == 0) ? 1 : station->capacity * 2;
-                        int *temp = (int *)realloc(station->cars, sizeof(int) * station->capacity);
+                        int *temp = (int *) realloc(station->cars, sizeof(int) * station->capacity);
                         station->cars = temp;
                     }
                     add_car(station, atoi(token));
-                    if(station->max_autonomy < atoi(token)) {
+                    if (station->max_autonomy < atoi(token)) {
                         station->max_autonomy = atoi(token);
                     }
                     puts("aggiunta");
@@ -407,13 +402,13 @@ int main() {
                     break;
                 }
             } else if (strcmp(token, "rottama-auto") == 0) {
-                char * distance = strtok(NULL, " ");
+                char *distance = strtok(NULL, " ");
                 station = search_station(root, atoi(distance));
-                if(station != NULL) {
+                if (station != NULL) {
                     token = strtok(NULL, " ");
                     remove_car(station, atoi(token));
-                    if(station->max_autonomy == atoi(token)){
-                        if(station->size != 0)
+                    if (station->max_autonomy == atoi(token)) {
+                        if (station->size != 0)
                             station->max_autonomy = station->cars[0];
                         else station->max_autonomy = 0;
                     }
@@ -424,14 +419,16 @@ int main() {
             } else if (strcmp(token, "pianifica-percorso") == 0) {
                 int start = atoi(strtok(NULL, " "));
                 int end = atoi(strtok(NULL, " "));
-                if(start == end) {
+
+                if (start == end) {
                     printf("%d", start);
                     break;
                 }
-                if(start < end) {
-                    if(size >= capacity) {
+
+                if (start < end) {
+                    if (size >= capacity) {
                         capacity = (capacity == 0) ? 1 : capacity * 2;
-                        int *temp = (int *)realloc(path, sizeof(int) * capacity);
+                        int *temp = (int *) realloc(path, sizeof(int) * capacity);
                         path = temp;
                     }
                     path[size] = end;
@@ -440,53 +437,47 @@ int main() {
                     StationNode *current = NULL;
                     current = search_station(root, end);
                     current = check_best_station(root, current, start);
-                    if(current == NULL) {
+                    if (current == NULL) {
                         puts("nessun percorso");
                         size = 0;
                         capacity = 0;
                         break;
                     }
-                    while(current != NULL && current->distance > start) {
-                        if (current == NULL) {
-                            puts("nessun percorso");
-                            break;
-                        }
-                        if(size >= capacity) {
+                    while (current != NULL && current->distance > start) {
+                        if (size >= capacity) {
                             capacity = (capacity == 0) ? 1 : capacity * 2;
-                            int *temp = (int *)realloc(path, sizeof(int) * capacity);
+                            int *temp = (int *) realloc(path, sizeof(int) * capacity);
                             path = temp;
                         }
                         path[size] = current->distance;
                         size++;
                         current = check_best_station(root, current, start);
                     }
-                    if(current == NULL) {
+                    if (current == NULL) {
                         puts("nessun percorso");
                         size = 0;
                         capacity = 0;
                         break;
                     }
-                    if(size >= capacity) {
+                    if (size >= capacity) {
                         capacity = (capacity == 0) ? 1 : capacity * 2;
-                        int *temp = (int *)realloc(path, sizeof(int) * capacity);
+                        int *temp = (int *) realloc(path, sizeof(int) * capacity);
                         path = temp;
                     }
                     path[size] = start;
                     size++;
 
-                    for(int i = size - 1; i >= 0; i--) {
-                        if(i == 0) printf("%d\n", path[i]);
+                    for (int i = size - 1; i >= 0; i--) {
+                        if (i == 0) printf("%d\n", path[i]);
                         else printf("%d ", path[i]);
                     }
                     size = 0;
                     capacity = 0;
-                }
-                //search path from end to begin
-                else {
+                } else {
                     StationNode *start_node = search_station(root, start);
-                    if(size >= capacity) {
+                    if (size >= capacity) {
                         capacity = (capacity == 0) ? 1 : capacity * 2;
-                        StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
+                        StationNode *temp = (StationNode *) realloc(path2, sizeof(StationNode) * capacity);
                         path2 = temp;
                     }
                     add->distance = start_node->distance;
@@ -497,7 +488,7 @@ int main() {
                     StationNode *current = get_next_station_based_on_max_autonomy(root, start_node);
                     StationNode *prev = current;
 
-                    if(current->distance == start_node->distance) {
+                    if (current->distance == start_node->distance) {
                         puts("nessun percorso");
                         size = 0;
                         capacity = 0;
@@ -505,9 +496,9 @@ int main() {
                     }
                     current = check_min_station(root, start, current, end);
 
-                    if(size >= capacity) {
+                    if (size >= capacity) {
                         capacity = (capacity == 0) ? 1 : capacity * 2;
-                        StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
+                        StationNode *temp = (StationNode *) realloc(path2, sizeof(StationNode) * capacity);
                         path2 = temp;
                     }
                     add->distance = current->distance;
@@ -516,20 +507,19 @@ int main() {
                     (size)++;
 
                     StationNode *current1 = NULL;
-                    while(current->distance > end) {
+                    while (current->distance > end) {
                         int max = current->distance;
                         current = get_next_station_based_on_max_autonomy(root, current);
 
-                        if(current1 != NULL && current1->distance == current->distance) {
+                        if (current1 != NULL && current1->distance == current->distance) {
                             puts("nessun percorso");
                             size = 0;
                             capacity = 0;
                             break;
-                        }
-                        else if(current->distance < end) {
-                            if(size >= capacity) {
+                        } else if (current->distance < end) {
+                            if (size >= capacity) {
                                 capacity = (capacity == 0) ? 1 : capacity * 2;
-                                StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
+                                StationNode *temp = (StationNode *) realloc(path2, sizeof(StationNode) * capacity);
                                 path2 = temp;
                             }
                             add->distance = end;
@@ -537,11 +527,10 @@ int main() {
                             path2[size] = *add;
                             (size)++;
                             break;
-                        }
-                        else if(current->distance - current->max_autonomy < end) {
-                            if(size >= capacity) {
+                        } else if (current->distance - current->max_autonomy < end) {
+                            if (size >= capacity) {
                                 capacity = (capacity == 0) ? 1 : capacity * 2;
-                                StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
+                                StationNode *temp = (StationNode *) realloc(path2, sizeof(StationNode) * capacity);
                                 path2 = temp;
                             }
                             add->distance = current->distance;
@@ -549,10 +538,10 @@ int main() {
                             path2[size] = *add;
                             (size)++;
 
-                            if(current->distance != end) {
-                                if(size == capacity) {
+                            if (current->distance != end) {
+                                if (size == capacity) {
                                     capacity = (capacity == 0) ? 1 : capacity * 2;
-                                    StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
+                                    StationNode *temp = (StationNode *) realloc(path2, sizeof(StationNode) * capacity);
                                     path2 = temp;
                                 }
                                 add->distance = end;
@@ -563,17 +552,17 @@ int main() {
                             break;
                         }
 
-                        StationNode * cur = check_min_station(root, max, current, end);
+                        StationNode *cur = check_min_station(root, max, current, end);
 
-                        if(prev->distance-prev->max_autonomy < cur->distance) {
-                            replace_station(prev, &path2, size-1);
+                        if (prev->distance - prev->max_autonomy < cur->distance) {
+                            replace_station(prev, &path2, size - 1);
                         }
                         prev = current;
                         current = cur;
 
-                        if(size >= capacity) {
+                        if (size >= capacity) {
                             capacity = (capacity == 0) ? 1 : capacity * 2;
-                            StationNode *temp = (StationNode *)realloc(path2, sizeof(StationNode) * capacity);
+                            StationNode *temp = (StationNode *) realloc(path2, sizeof(StationNode) * capacity);
                             path2 = temp;
                         }
                         add->distance = current->distance;
@@ -583,19 +572,19 @@ int main() {
                         current1 = current;
                     }
 
-                    for(int i = 0; i < size; i++) {
-                        if(i >= 1 && i <= size - 2) {
-                            StationNode * max = get_next_station_generic(root, path2[i-1].distance-path2[i-1].max_autonomy);
-                            StationNode * next = get_next_station(root, max);
-                            while(next != NULL && next->distance < path2[i].distance) {
-                                if(next->distance - next->max_autonomy <= path2[i+1].distance) {
+                    for (int i = 0; i < size; i++) {
+                        if (i >= 1 && i <= size - 2) {
+                            StationNode *max = get_next_station_generic(root, path2[i - 1].distance -
+                                                                              path2[i - 1].max_autonomy);
+                            StationNode *next = get_next_station(root, max);
+                            while (next != NULL && next->distance < path2[i].distance) {
+                                if (next->distance - next->max_autonomy <= path2[i + 1].distance) {
                                     replace_station(next, &path2, i);
                                     break;
-                                }
-                                else next = get_next_station(root, next);
+                                } else next = get_next_station(root, next);
                             }
                         }
-                        if(i == size - 1) printf("%d\n", path2[i].distance);
+                        if (i == size - 1) printf("%d\n", path2[i].distance);
                         else printf("%d ", path2[i].distance);
                     }
                     size = 0;
@@ -606,6 +595,7 @@ int main() {
         }
     }
 
+    //free memory
     free(path);
     free(add);
     free(path2);
